@@ -1,0 +1,22 @@
+TITLE:: SpiralView
+summary:: Spiral's display
+categories:: Libraries>Spiral
+related:: Classes/Spiral, Classes/FxParamView, Classes/FxParamPanel
+
+DESCRIPTION::
+What link::Classes/FxParamPanel:: puts at the top of Spiral's window. In it, drag along for the shift (fine near the middle), up and down for the feedback; the wheel for the delay. It draws where a 440 Hz note goes, trip by trip: what the numbers do to one partial, not what is playing now.
+
+It draws from the object's settings and the replies its meters bring, so it is only live while the window is running; link::Classes/FxParamView:: has the rest.
+
+CLASSMETHODS::
+
+METHOD:: new
+ARGUMENT:: unit
+The link::Classes/Spiral::.
+ARGUMENT:: parent
+A view to go in.
+
+INSTANCEMETHODS::
+
+METHOD:: hint
+What the hint bar says over it.

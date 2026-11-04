@@ -1,0 +1,11 @@
+(
+	name: "Spiral",
+	summary: "a frequency shifter in a feedback loop, with ring modulation and drift, as a UGen and as an object, with a window",
+	version: "0.1.0",
+	author: "Francesco Corvi",
+	url: "https://github.com/fracnesco/sc-spiral.git",
+	license: "MIT",
+	copyright: "Copyright (c) 2026 Francesco Corvi",
+	schelp: "HelpSource",
+	dependencies: ["https://github.com/fracnesco/sc-fx-kit.git"]
+)

@@ -1,0 +1,70 @@
+TITLE:: Spiral
+summary:: a frequency shifter in a feedback loop, with ring modulation and drift, as a UGen and as an object, with a window
+categories:: Libraries>Spiral
+related:: Classes/FxParamUnit, Classes/SpiralView, Classes/FxUnit, Classes/FxChain
+
+DESCRIPTION::
+A frequency shifter in a feedback loop - the sound that keeps climbing and never gets anywhere - running anywhere a UGen does, with a window.
+
+code::
+Ndef(\tone, { Spiral.ar(SinOsc.ar([220, 221]) * Decay2.kr(Impulse.kr(0.5), 0.01, 0.5) * 0.3, \spiral) }).play;
+
+p = Spiral(Ndef(\tone), \spiral);
+p.gui;
+p.shift = 40; p.feedback = 0.8; p.delay = 0.08;
+p.spread = 1;                     // the sides go opposite ways
+p.preset = 'barber pole';
+::
+
+A pitch shifter multiplies every partial; a frequency shifter adds the same number of Hz to each, so harmonics stop being harmonics. In a loop, each trip moves the sound further: code::shift:: is how far, code::delay:: how long a trip takes, and code::feedback:: how many trips it survives. code::damp:: and code::loCut:: are the walls climbing and falling notes die out against.
+
+code::spread:: sends the sides apart, and at 100% in opposite directions. code::ring:: fades over to ring modulation at the same frequency, which goes both ways at once. code::driftDepth:: makes the shift wander.
+
+The knob for code::shift:: is fine near 0 and coarse at the ends (code::FxCubeWarp::), since 0.5 Hz and 500 Hz are both things you want.
+
+A loop of less than a block is not possible without code::LocalIn::, which the family does not use: the shortest code::delay:: is about 1.4 ms at 48 kHz and 64 samples.
+
+subsection:: The object and the UGen
+It is an link::Classes/FxParamUnit::, so everything that class documents works here: code::Spiral.ar(in, name)::, code::Spiral(node, name)::, code::Spiral.onBus(bus, numChannels)::, presets, the clipboard, code::gui::. Its window's display is a link::Classes/SpiralView::.
+
+subsection:: Parameters
+Each is a property of the object: read it, set it. The numbers are in the order of the node's control, which is what saved node maps carry. Internal ones without a knob, if any, are described above.
+
+table::
+## strong::parameter:: || strong::range:: || strong::default:: || strong::what it does::
+## code::shift:: || -2000 .. 2000 Hz || 30 || how far each trip moves every partial, in Hz
+## code::spread:: || -1 .. 1 || 0 || the sides apart: at 100 they go opposite ways
+## code::ring:: || 0 .. 1 || 0 || over to ring modulation: both directions at once
+## code::driftDepth:: || 0 .. 1 || 0 || how far the shift wanders, as a part of itself
+## code::driftShape:: || sine triangle sawUp sawDown square sampleHold noise || noise || how it wanders
+## code::driftRate:: || 0.01 .. 12 Hz || 0.3 || how quickly
+## code::feedback:: || 0 .. 1.05 || 0.6 || how many trips it survives - past 100, it builds to a roar
+## code::delay:: || 0.0015 .. 2 s || 0.08 || how long a trip takes
+## code::damp:: || 200 .. 20000 Hz || 12000 || a low pass in the loop: climbing notes die out at the top
+## code::loCut:: || 20 .. 4000 Hz || 40 || a high pass in the loop: falling notes die out at the bottom
+## code::drive:: || 0 .. 24 dB || 0 || how hard the loop saturates
+## code::width:: || 0 .. 2 || 1 || how far apart the sides are
+## code::mix:: || 0 .. 1 || 0.5 || how much of the effect goes out, against the dry signal
+## code::output:: || -36 .. 24 dB || 0 || the level of the whole thing, in dB
+::
+
+CLASSMETHODS::
+
+METHOD:: climb
+where a partial is after some trips, in Hz.
+ARGUMENT:: freq
+ARGUMENT:: shift
+ARGUMENT:: trips
+
+INSTANCEMETHODS::
+
+EXAMPLES::
+
+code::
+s.boot;
+Ndef(\tone, { Spiral.ar(SinOsc.ar([220, 221]) * Decay2.kr(Impulse.kr(0.5), 0.01, 0.5) * 0.3, \spiral) }).play;
+p = Spiral(Ndef(\tone), \spiral);
+p.gui;
+p.preset = Spiral.presetNames.choose;
+p.free; Ndef(\tone).clear;
+::
