@@ -67,6 +67,32 @@ Spiral : FxParamUnit {
 		]
 	}
 
+	// what does nothing in the current settings, dimmed
+	*isActive { |key, unit|
+		var fb = unit.get(\feedback) ? 0, depth = unit.get(\driftDepth) ? 0;
+		^switch (key,
+			// no feedback: one trip, nothing goes round, so nothing waits or saturates
+			\delay, { fb > 0 },
+			\drive, { fb > 0 },
+			\driftShape, { depth > 0 },
+			\driftSync, { depth > 0 },
+			// on Tidal's clock the rate is the cycle's
+			\driftRate, { depth > 0 and: { unit.get(\driftSync) == \free } },
+			{ true }
+		)
+	}
+
+	// parameters renamed on 2026-11-08 so each is a free Tidal word (old -> new):
+	// old presets, sessions and code still reach them
+	*renamed { ^(spread: \sides) }
+
+	// what a Tidal pattern may move through SuperDirtGUI, event by event
+	*tidalParams {
+		^#[\shift, \sides, \ring, \driftDepth, \driftRate, \driftSync, \feedback, \delay, \damp, \drive, \width, \mix]
+	}
+
+	*usesTidalClock { ^true }
+
 	*presetList {
 		^[
 			\default, (),
