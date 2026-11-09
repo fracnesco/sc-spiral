@@ -1,7 +1,7 @@
 TITLE:: Spiral
 summary:: a frequency shifter in a feedback loop, with ring modulation and drift, as a UGen and as an object, with a window
 categories:: Libraries>Spiral
-related:: Classes/FxParamUnit, Classes/SpiralView, Classes/FxUnit, Classes/FxChain
+related:: Classes/FxParamUnit, Classes/SpiralView, Classes/SpiralPanel, Classes/FxUnit, Classes/FxChain
 
 DESCRIPTION::
 A frequency shifter in a feedback loop - the sound that keeps climbing and never gets anywhere - running anywhere a UGen does, with a window.
@@ -12,13 +12,13 @@ Ndef(\tone, { Spiral.ar(SinOsc.ar([220, 221]) * Decay2.kr(Impulse.kr(0.5), 0.01,
 p = Spiral(Ndef(\tone), \spiral);
 p.gui;
 p.shift = 40; p.feedback = 0.8; p.delay = 0.08;
-p.spread = 1;                     // the sides go opposite ways
+p.sides = 1;                     // the sides go opposite ways
 p.preset = 'barber pole';
 ::
 
 A pitch shifter multiplies every partial; a frequency shifter adds the same number of Hz to each, so harmonics stop being harmonics. In a loop, each trip moves the sound further: code::shift:: is how far, code::delay:: how long a trip takes, and code::feedback:: how many trips it survives. code::damp:: and code::loCut:: are the walls climbing and falling notes die out against.
 
-code::spread:: sends the sides apart, and at 100% in opposite directions. code::ring:: fades over to ring modulation at the same frequency, which goes both ways at once. code::driftDepth:: makes the shift wander.
+code::sides:: sends the sides apart, and at 100% in opposite directions. code::ring:: fades over to ring modulation at the same frequency, which goes both ways at once. code::driftDepth:: makes the shift wander.
 
 The knob for code::shift:: is fine near 0 and coarse at the ends (code::FxCubeWarp::), since 0.5 Hz and 500 Hz are both things you want.
 
@@ -27,31 +27,38 @@ A loop of less than a block is not possible without code::LocalIn::, which the f
 subsection:: The object and the UGen
 It is an link::Classes/FxParamUnit::, so everything that class documents works here: code::Spiral.ar(in, name)::, code::Spiral(node, name)::, code::Spiral.onBus(bus, numChannels)::, presets, the clipboard, code::gui::. Its window's display is a link::Classes/SpiralView::.
 
+subsection:: The window
+code::p.gui:: opens it, code::p.panel(view):: puts it in a view of yours (a link::Classes/SpiralPanel::). The display is the climb: where a 440 Hz note goes, trip by trip round the loop, Hz up and seconds along, with the lo pass and hi pass as walls and the shift on its own strip under it. Drag the climb for the shift and the delay, its end line for the feedback, a wall for its filter, the strip for the shift; link::Classes/SpiralView:: has every gesture. Under it, one row of cards: shift (in the pitch family's lime), loop, drift, output. What does nothing in the current settings is dimmed: delay and drive at no feedback, the drift's shape, rate and sync while its depth is 0.
+
 subsection:: Parameters
 Each is a property of the object: read it, set it. The numbers are in the order of the node's control, which is what saved node maps carry. Internal ones without a knob, if any, are described above.
 
 table::
 ## strong::parameter:: || strong::range:: || strong::default:: || strong::what it does::
-## code::shift:: || -2000 .. 2000 Hz || 30 || how far each trip moves every partial, in Hz
-## code::spread:: || -1 .. 1 || 0 || the sides apart: at 100 they go opposite ways
-## code::ring:: || 0 .. 1 || 0 || over to ring modulation: both directions at once
+## code::shift:: || -2000 .. 2000 Hz || 30 || how far each trip moves every partial, in Hz: up, or down below 0
+## code::sides:: || -1 .. 1 || 0 || the sides apart: at 50 the right one stands still, at 100 it goes the opposite way
+## code::ring:: || 0 .. 1 || 0 || over to ring modulation: up and down at once
 ## code::driftDepth:: || 0 .. 1 || 0 || how far the shift wanders, as a part of itself
-## code::driftShape:: || sine triangle sawUp sawDown square sampleHold noise || noise || how it wanders
-## code::driftRate:: || 0.01 .. 12 Hz || 0.3 || how quickly
+## code::driftShape:: || sine triangle sawUp sawDown square sampleHold noise || noise || how the shift wanders
+## code::driftRate:: || 0.01 .. 12 Hz || 0.3 || how quickly it wanders
 ## code::feedback:: || 0 .. 1.05 || 0.6 || how many trips it survives - past 100, it builds to a roar
-## code::delay:: || 0.0015 .. 2 s || 0.08 || how long a trip takes
+## code::delay:: || 0.0015 .. 2 s || 0.08 || how long a trip round the loop takes
 ## code::damp:: || 200 .. 20000 Hz || 12000 || a low pass in the loop: climbing notes die out at the top
 ## code::loCut:: || 20 .. 4000 Hz || 40 || a high pass in the loop: falling notes die out at the bottom
-## code::drive:: || 0 .. 24 dB || 0 || how hard the loop saturates
+## code::drive:: || 0 .. 24 dB || 0 || how hard the loop saturates: it holds a long loop up
 ## code::width:: || 0 .. 2 || 1 || how far apart the sides are
 ## code::mix:: || 0 .. 1 || 0.5 || how much of the effect goes out, against the dry signal
 ## code::output:: || -36 .. 24 dB || 0 || the level of the whole thing, in dB
+## code::driftSync:: || free four two one half quarter eighth sixteenth third sixth twelfth || free || the drift free, at its rate - or one period every so many cycles of Tidal's clock
 ::
 
 CLASSMETHODS::
 
+METHOD:: identityColour
+The pitch family's lime (code::FxPalette.identity(\pitch)::): the trail, the shift card, the big knobs.
+
 METHOD:: climb
-where a partial is after some trips, in Hz.
+where a partial is after some trips, in Hz, counted as if nothing folded or filtered it - link::Classes/SpiralView#*journey:: is the display's full model.
 ARGUMENT:: freq
 ARGUMENT:: shift
 ARGUMENT:: trips

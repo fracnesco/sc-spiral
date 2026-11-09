@@ -1,0 +1,12 @@
+TITLE:: SpiralShiftKnob
+summary:: Spiral's shift knob: its value with a sign
+categories:: Libraries>Spiral
+related:: Classes/SpiralPanel, Classes/FxKnob
+
+DESCRIPTION::
+An link::Classes/FxKnob:: that writes its value as a shift: "+24.0 Hz", "-1.50 kHz", "0 Hz" - down is as much a shift as up, and a negative shift past a kHz still reads in kHz. Everything else is the knob's: drag, shift for fine, double click back to the default, click the value to type ("-1.5k", "e2"). link::Classes/SpiralPanel:: makes it for code::shift::.
+
+INSTANCEMETHODS::
+
+METHOD:: text
+The value as it is written under the knob.

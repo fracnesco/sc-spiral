@@ -1,12 +1,37 @@
 TITLE:: SpiralView
-summary:: Spiral's display
+summary:: Spiral's display: where one note goes, trip by trip
 categories:: Libraries>Spiral
-related:: Classes/Spiral, Classes/FxParamView, Classes/FxParamPanel
+related:: Classes/Spiral, Classes/SpiralPanel, Classes/FxParamView, Classes/FxDevicePanel
 
 DESCRIPTION::
-What link::Classes/FxParamPanel:: puts at the top of Spiral's window. In it, drag along for the shift (fine near the middle), up and down for the feedback; the wheel for the delay. It draws where a 440 Hz note goes, trip by trip: what the numbers do to one partial, not what is playing now.
+What link::Classes/SpiralPanel:: puts at the top of Spiral's window, with the meters beside it.
 
-It draws from the object's settings and the replies its meters bring, so it is only live while the window is running; link::Classes/FxParamView:: has the rest.
+The climb: a note at 440 Hz (a5) goes in, and each bar is where the shifter has put it after one more trip round the loop, as long as a trip takes and as bright as the feedback leaves it. Hz go up on a log scale and seconds along, so the slope is the shift and the length of the train is the feedback. The lo pass (code::damp::) and hi pass (code::loCut::) are walls at the top and bottom, the shaded parts beyond them where a climbing or falling note dies out. The dashed end line is where the train has died out (-60 dB), or says "goes on" when the loop holds it up.
+
+With code::sides:: the right side's trail is hollow; with code::ring:: every trip goes up and down at once; with code::driftDepth:: an orange band is how far the trail wanders. A short loop with a small shift is a comb whose teeth slide, and the caption says so. Behind it all, at the left edge, the output's spectrum lies on its side; while the window is running the trail sways with the drift the server reports.
+
+Under the climb, the shift strip: the shift on its knob's scale, 0 in the middle, down to the left and up to the right, with the left side's needle filled and the right side's hollow.
+
+table::
+## strong::in the display:: || strong::does::
+## drag the climb || up and down: code::shift::; along: the trips stretch (code::delay::) - the time axis holds still while you drag
+## drag the end line || code::feedback::: where the train dies out
+## drag a wall || code::damp:: (top) or code::loCut:: (bottom)
+## drag the strip || code::shift::, the needle follows the pointer and 0 sticks in the middle
+## drag the hollow needle || code::sides::
+## the wheel || code::feedback::; on the strip code::shift::, on a wall that wall
+## shift || fine, a tenth as far
+## double click || back to the default of what is under it
+::
+
+It draws from the object's settings and the replies its meters bring, so it is only live while the window is running; link::Classes/FxParamView:: has the rest. The model is in class methods, so a check or a page of notes can ask it the same numbers:
+
+code::
+SpiralView.journey(440, 100, 0.5, trips: 3).collect(_[1]);	// [540, 640, 740]
+SpiralView.journey(440, -100, 0.5, trips: 6).collect(_[1]);	// [340, 240, 140, 40, 60, 40]: through 0 Hz it folds back up
+SpiralView.endTime(24, 0.92, 0.12, 0, 8000, 40);			// the barber pole dies out after about 10 s
+SpiralView.feedbackFor(5, 24, 0.12, 0, 8000, 40);			// the feedback for 5 s
+::
 
 CLASSMETHODS::
 
@@ -16,7 +41,90 @@ The link::Classes/Spiral::.
 ARGUMENT:: parent
 A view to go in.
 
+METHOD:: note
+The note the display follows, in Hz (440).
+
+METHOD:: maxTrips
+How many trips it follows at most (256): past them a train "goes on".
+
+METHOD:: journey
+Where a note goes: an Array of code::[trip, Hz, amplitude]::. Trip 0 is the first pass, at once; each after it a code::delay:: later. It stops when the note is under -60 dB.
+ARGUMENT:: freq
+ARGUMENT:: hz
+The shift.
+ARGUMENT:: feedback
+ARGUMENT:: drive
+In dB: the loop's tanh holds a quiet signal up by its square root.
+ARGUMENT:: damp
+ARGUMENT:: loCut
+ARGUMENT:: trips
+At most this many (code::maxTrips::).
+
+METHOD:: ringTrips
+The same with code::ring::: an Array, a trip each, of code::[Hz, amplitude]:: pairs, until all of a trip's partials together are under -60 dB.
+ARGUMENT:: freq
+ARGUMENT:: hz
+ARGUMENT:: ring
+ARGUMENT:: feedback
+ARGUMENT:: drive
+ARGUMENT:: damp
+ARGUMENT:: loCut
+ARGUMENT:: trips
+
+METHOD:: wall
+What the loop's lo pass and hi pass leave of a partial (each 12 dB an octave).
+ARGUMENT:: f
+ARGUMENT:: damp
+ARGUMENT:: loCut
+
+METHOD:: loopGain
+A trip's gain at low level: code::feedback * sqrt(drive.dbamp)::.
+ARGUMENT:: feedback
+ARGUMENT:: drive
+
+METHOD:: goesOn
+True when a journey still sounds after code::maxTrips::.
+ARGUMENT:: journey
+ARGUMENT:: feedback
+
+METHOD:: endTime
+When the train has died out, in seconds.
+ARGUMENT:: hz
+ARGUMENT:: feedback
+ARGUMENT:: delay
+ARGUMENT:: drive
+ARGUMENT:: damp
+ARGUMENT:: loCut
+ARGUMENT:: ring
+
+METHOD:: feedbackFor
+The feedback (0 .. 1) whose train dies out at code::t:: seconds: what dragging the end line sets.
+ARGUMENT:: t
+ARGUMENT:: hz
+ARGUMENT:: delay
+ARGUMENT:: drive
+ARGUMENT:: damp
+ARGUMENT:: loCut
+ARGUMENT:: ring
+
+METHOD:: hzText
+A shift as the window writes it, with its sign: "+24.0 Hz", "-1.50 kHz", "0 Hz".
+ARGUMENT:: v
+ARGUMENT:: signed
+
+METHOD:: zoneName
+What a shift that size does to a held sound: "phase" (under 2 Hz), "beat" (under 20), "metal" (under 200), "clang".
+ARGUMENT:: hz
+
 INSTANCEMETHODS::
 
+METHOD:: panel
+The link::Classes/SpiralPanel:: it is in, so hovering a part of the display lights the knobs that set it.
+
+METHOD:: hot
+The parameter whose knob the pointer is on, lit in the display; nil for none.
+
 METHOD:: hint
-What the hint bar says over it.
+What the hint bar says over it: what is under the pointer, its value and what dragging does.
+ARGUMENT:: x
+ARGUMENT:: y

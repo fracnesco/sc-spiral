@@ -17,7 +17,7 @@ Ndef(\tone, { Spiral.ar(SinOsc.ar([220, 221]) * Decay2.kr(Impulse.kr(0.5), 0.01,
 // ---- 2. settings: each is a property, each moves the window
 (
 ~p.shift = 40; ~p.feedback = 0.8; ~p.delay = 0.08;
-~p.spread = 1;                     // the sides go opposite ways
+~p.sides = 1;                     // the sides go opposite ways
 ~p.preset = 'barber pole';
 )
 

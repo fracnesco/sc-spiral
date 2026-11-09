@@ -1,0 +1,37 @@
+TITLE:: SpiralPanel
+summary:: Spiral's device panel
+categories:: Libraries>Spiral
+related:: Classes/Spiral, Classes/SpiralView, Classes/SpiralShiftKnob, Classes/FxDevicePanel
+
+DESCRIPTION::
+The link::Classes/FxDevicePanel:: every effect of the family has, plus two things: its shift knob is a link::Classes/SpiralShiftKnob::, which says the shift with its sign, and it hands the display the panel, so hovering a part of the link::Classes/SpiralView:: lights the knobs that set it, and hovering one of those knobs lights its part of the display. code::Spiral.panelClass:: answers it, so code::p.gui:: and code::p.panel(view):: both use it.
+
+code::
+p = Spiral.new;
+p.gui;                                   // the window, with a SpiralPanel in it
+
+(
+// or the same panel in a window of yours
+w = Window("spiral", Rect(100, 100, 960, 580));
+q = p.panel(w.view);
+w.view.layout = VLayout(q.view);
+q.running = true;                        // meters on while it shows
+w.onClose = { q.remove };
+w.front;
+);
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+ARGUMENT:: unit
+The link::Classes/Spiral::.
+ARGUMENT:: parent
+A view to go in.
+
+INSTANCEMETHODS::
+
+METHOD:: hints
+The hint bar: the knobs the display draws also tell the display while the pointer is on them.
+ARGUMENT:: bar
+An link::Classes/FxHintBar::.
