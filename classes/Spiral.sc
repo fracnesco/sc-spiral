@@ -12,7 +12,7 @@
 //   p = Spiral(Ndef(\tone), \spiral);
 //   p.gui;
 //   p.shift = 40; p.feedback = 0.8; p.delay = 0.08;
-//   p.spread = 1;                        // the sides go opposite ways
+//   p.sides = 1;                        // the sides go opposite ways
 //   p.preset = 'barber pole';
 //
 // The knob for `shift` is fine near 0 and coarse at the ends, since 0.5 Hz and
@@ -24,26 +24,46 @@ Spiral : FxParamUnit {
 	*controlName { ^\spiral }
 	*hasTail { ^true }
 	*displayClass { ^SpiralView }
-	*windowSize { ^Point(860, 490) }
+	*guiClass { ^FxDeviceGUI }
+	*panelClass { ^SpiralPanel }
+	*windowSize { ^Point(960, 580) }
+
+	// the pitch family's lime: what the shifter adds, the note's trail round the loop
+	*identityColour { ^FxPalette.identity(\pitch) }
 
 	*params {
-		var shift = this.knob(\shift, -2000, 2000, \lin, 30, "Hz", "shift", "how far each trip moves every partial, in Hz", section: \shift, dec: 2);
+		var shift = this.knob(\shift, -2000, 2000, \lin, 30, "Hz", "shift",
+			"how far each trip moves every partial, in Hz: up, or down below 0", section: \shift, dec: 2, size: \big);
 		shift[\spec].warp = FxCubeWarp(shift[\spec]);
 		^[
 			shift,
-			this.knob(\spread, -1, 1, \lin, 0, "", "spread", "the sides apart: at 100 they go opposite ways", box: \pct, section: \shift),
-			this.knob(\ring, 0, 1, \lin, 0, "", "ring", "over to ring modulation: both directions at once", box: \pct, section: \shift),
-			this.knob(\driftDepth, 0, 1, \lin, 0, "", "drift", "how far the shift wanders, as a part of itself", box: \pct, section: \shift),
-			this.menu(\driftShape, FxLfo.shapes, \noise, "shape", "how it wanders", \shift),
-			this.knob(\driftRate, 0.01, 12, \exp, 0.3, "Hz", "rate", "how quickly", section: \shift),
+			this.knob(\sides, -1, 1, \lin, 0, "", "sides", "the sides apart: at 50 the right one stands still, at 100 it goes the opposite way", box: \pct, section: \shift),
+			this.knob(\ring, 0, 1, \lin, 0, "", "ring", "over to ring modulation: up and down at once", box: \pct, section: \shift),
+			this.knob(\driftDepth, 0, 1, \lin, 0, "", "depth", "how far the shift wanders, as a part of itself", box: \pct, section: \drift, size: \small),
+			this.menu(\driftShape, FxLfo.shapes, \noise, "shape", "how the shift wanders", \drift),
+			this.knob(\driftRate, 0.01, 12, \exp, 0.3, "Hz", "rate", "how quickly it wanders", section: \drift, size: \small),
 
-			this.knob(\feedback, 0, 1.05, \lin, 0.6, "", "feedback", "how many trips it survives - past 100, it builds to a roar", box: \pct, section: \loop),
-			this.knob(\delay, 0.0015, 2, \exp, 0.08, "s", "delay", "how long a trip takes", box: \ms, lag: 0.15, section: \loop),
-			this.knob(\damp, 200, 20000, \exp, 12000, "Hz", "lo pass", "a low pass in the loop: climbing notes die out at the top", section: \loop, dec: 0),
-			this.knob(\loCut, 20, 4000, \exp, 40, "Hz", "hi pass", "a high pass in the loop: falling notes die out at the bottom", section: \loop, dec: 0),
-			this.knob(\drive, 0, 24, \lin, 0, "dB", "drive", "how hard the loop saturates", section: \loop, dec: 1),
-			this.knob(\width, 0, 2, \lin, 1, "", "width", "how far apart the sides are", box: \pct, section: \loop),
-			this.mixParams(\loop, 0.5)
+			this.knob(\feedback, 0, 1.05, \lin, 0.6, "", "feedback", "how many trips it survives - past 100, it builds to a roar", box: \pct, section: \loop, size: \big),
+			this.knob(\delay, 0.0015, 2, \exp, 0.08, "s", "delay", "how long a trip round the loop takes", box: \ms, lag: 0.15, section: \loop, size: \big),
+			this.knob(\damp, 200, 20000, \exp, 12000, "Hz", "lo pass", "a low pass in the loop: climbing notes die out at the top", section: \loop, dec: 0, size: \small),
+			this.knob(\loCut, 20, 4000, \exp, 40, "Hz", "hi pass", "a high pass in the loop: falling notes die out at the bottom", section: \loop, dec: 0, size: \small),
+			this.knob(\drive, 0, 24, \lin, 0, "dB", "drive", "how hard the loop saturates: it holds a long loop up", section: \loop, dec: 1, size: \small, bipolar: false),
+			this.knob(\width, 0, 2, \lin, 1, "", "width", "how far apart the sides are", box: \pct, section: \output),
+			this.mixParams(\output, 0.5),
+			// appended 2026-11-08: the drift on Tidal's cycle (FxLfo's sync)
+			this.menu(\driftSync, FxLfo.syncNames, \free, "sync",
+				"the drift free, at its rate - or one period every so many cycles of Tidal's clock", \drift)
+		]
+	}
+
+	// one page: the shifter, the loop, the drift, then the output card
+	*devicePages {
+		^[
+			\spiral -> [
+				(title: "shift", keys: [\shift, \sides, \ring], colour: \identity),
+				(title: "loop", keys: [\delay, \feedback, [\damp, \loCut], \drive]),
+				(title: "drift", keys: [[\driftDepth, \driftShape], [\driftRate, \driftSync]])
+			]
 		]
 	}
 
@@ -52,8 +72,8 @@ Spiral : FxParamUnit {
 			\default, (),
 			'barber pole', (shift: 24, feedback: 0.92, delay: 0.12, damp: 8000, mix: 0.6),
 			'falling', (shift: -18, feedback: 0.88, delay: 0.16, loCut: 90, mix: 0.6),
-			'opposite ways', (shift: 45, spread: 1, feedback: 0.8, delay: 0.09, mix: 0.6),
-			'detuned air', (shift: 1.2, spread: 1, feedback: 0.3, delay: 0.01, mix: 0.5),
+			'opposite ways', (shift: 45, sides: 1, feedback: 0.8, delay: 0.09, mix: 0.6),
+			'detuned air', (shift: 1.2, sides: 1, feedback: 0.3, delay: 0.01, mix: 0.5),
 			'phasing', (shift: 0.4, feedback: 0.75, delay: 0.004, mix: 0.5),
 			'bell ring', (shift: 320, ring: 1, feedback: 0.55, delay: 0.25, mix: 0.5),
 			'alien radio', (shift: 700, feedback: 0.7, delay: 0.03, driftDepth: 0.3, driftRate: 2, drive: 6, mix: 0.7),
@@ -68,13 +88,13 @@ Spiral : FxParamUnit {
 	*process { |sig, p, ctx|
 		var n = sig.size;
 		var loop = FxLoop(n, 2.1);
-		var drift = FxLfo.kr(p[\driftShape], p[\driftRate]);
+		var drift = FxLfo.kr(p[\driftShape], p[\driftRate], 0, p[\driftSync]);
 		var y = loop.read(p[\delay]);
 		var x = sig + (y * p[\feedback]);
 		var gain = p[\drive].dbamp;
 		var wet = n.collect { |i|
 			// on the right, spread moves it towards the opposite direction
-			var side = (i % 2) * p[\spread] * -2 + 1;
+			var side = (i % 2) * p[\sides] * -2 + 1;
 			var hz = p[\shift] * (1 + (drift * p[\driftDepth])) * side;
 			var shifted = FreqShift.ar(x[i], hz);
 			var ringed = x[i] * SinOsc.ar(hz.abs);
