@@ -2,6 +2,8 @@
 
 **A frequency shifter in a feedback loop - the sound that keeps climbing and never gets anywhere - running anywhere a UGen does, with a window.** A SuperCollider extension.
 
+![Spiral's window](images/spiral.png)
+
 ```supercollider
 s.boot;
 Ndef(\tone, { Spiral.ar(SinOsc.ar([220, 221]) * Decay2.kr(Impulse.kr(0.5), 0.01, 0.5) * 0.3, \spiral) }).play;
@@ -127,6 +129,7 @@ Every parameter is a property: `p.shift`, `p.shift = ...`. These also work by na
 | [examples/spiral-demo.scd](examples/spiral-demo.scd) | a walkthrough, one block at a time |
 | [install.scd](install.scd) | the symlink, a check, an uninstall |
 | [sc-spiral.quark](sc-spiral.quark) | the quark manifest |
+| [images/](images/) | the screenshots in this README |
 
 ## License
 
